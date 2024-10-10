@@ -1,0 +1,142 @@
+#!/bin/bash
+
+VERSION="v0.1.0"
+
+function show_help {
+    echo "sysopctl - A custom Linux command for managing system resources and services"
+    echo "Usage: sysopctl [command] [options]"
+    echo ""
+    echo "Commands:"
+    echo "  service list             List all running services"
+    echo "  service start <name>     Start a specific service"
+    echo "  service stop <name>      Stop a specific service"
+    echo "  system load              Show current system load"
+    echo "  disk usage               Display disk usage by partition"
+    echo "  process monitor          Monitor system processes in real-time"
+    echo "  logs analyze             Analyze recent system logs"
+    echo "  backup <path>            Backup specified directory"
+    echo "  --help                   Show help message"
+    echo "  --version                Show command version"
+}
+
+function show_version {
+    echo "sysopctl version $VERSION"
+}
+
+function list_services {
+    echo "Listing active services..."
+    systemctl list-units --type=service
+}
+
+function system_load {
+    echo "Displaying system load..."
+    uptime
+}
+
+function disk_usage {
+    echo "Checking disk usage..."
+    df -h
+}
+
+function start_service {
+    if [ -z "$1" ]; then
+        echo "Error: Please provide a service name."
+        exit 1
+    fi
+    echo "Starting service $1..."
+    sudo systemctl start "$1"
+}
+
+function stop_service {
+    if [ -z "$1" ]; then
+        echo "Error: Please provide a service name."
+        exit 1
+    fi
+    echo "Stopping service $1..."
+    sudo systemctl stop "$1"
+}
+
+function process_monitor {
+    echo "Monitoring system processes..."
+    top
+}
+
+function logs_analyze {
+    echo "Analyzing recent logs..."
+    journalctl -p 3 -xb
+}
+
+function backup_files {
+    if [ -z "$1" ]; then
+        echo "Error: Please provide a path to backup."
+        exit 1
+    fi
+    echo "Backing up directory $1..."
+    rsync -av --progress "$1" "/backup/$(basename $1)_backup"
+    echo "Backup completed."
+}
+
+case "$1" in
+    --help)
+        show_help
+        ;;
+    --version)
+        show_version
+        ;;
+    service)
+        case "$2" in
+            list)
+                list_services
+                ;;
+            start)
+                start_service "$3"
+                ;;
+            stop)
+                stop_service "$3"
+                ;;
+            *)
+                echo "Unknown service command: $2"
+                show_help
+                ;;
+        esac
+        ;;
+    system)
+        if [ "$2" == "load" ]; then
+            system_load
+        else
+            echo "Unknown system command: $2"
+            show_help
+        fi
+        ;;
+    disk)
+        if [ "$2" == "usage" ]; then
+            disk_usage
+        else
+            echo "Unknown disk command: $2"
+            show_help
+        fi
+        ;;
+    process)
+        if [ "$2" == "monitor" ]; then
+            process_monitor
+        else
+            echo "Unknown process command: $2"
+            show_help
+        fi
+        ;;
+    logs)
+        if [ "$2" == "analyze" ]; then
+            logs_analyze
+        else
+            echo "Unknown logs command: $2"
+            show_help
+        fi
+        ;;
+    backup)
+        backup_files "$2"
+        ;;
+    *)
+        echo "Unknown command: $1"
+        show_help
+        ;;
+esac
